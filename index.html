@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#234a38">
+<meta name="description" content="EcoBuesaco: turismo ecológico en Buesaco, Nariño. Senderismo, cascadas, miradores, café y cultura.">
+<title>EcoBuesaco · Turismo ecológico</title>
+<link rel="stylesheet" href="libs/leaflet/leaflet.css">
+<link rel="stylesheet" href="css/estilos.css">
+<link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <h1 class="logo">Eco<b>Buesaco</b></h1>
+    <form class="search" id="searchForm" role="search">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+      <input id="searchInput" type="search" placeholder="¿A dónde quieres ir?" aria-label="Buscar destinos" autocomplete="off">
+    </form>
+  </header>
+
+  <nav class="nav" aria-label="Navegación principal">
+    <button data-view="inicio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Inicio</button>
+    <button data-view="explorar"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>Explorar</button>
+    <button data-view="guias"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h11a3 3 0 0 1 3 3v15H8a3 3 0 0 1-3-3z"/><path d="M9 8h6M9 12h6"/></svg>Guías</button>
+    <button data-view="perfil"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>Perfil</button>
+  </nav>
+
+  <main id="main">
+    <section class="view" id="view-inicio" aria-live="polite">
+      <div class="state" style="margin-top:20px">Cargando EcoBuesaco…</div>
+    </section>
+    <section class="view" id="view-explorar" hidden></section>
+    <section class="view" id="view-guias" hidden></section>
+    <section class="view" id="view-perfil" hidden></section>
+    <section class="view" id="view-admin" hidden></section>
+    <noscript><div class="state">EcoBuesaco necesita JavaScript activado para funcionar.</div></noscript>
+  </main>
+</div>
+
+<!-- Detalle de destino y de guía (lo llena app.js) -->
+<dialog id="detailDialog" aria-label="Detalle"></dialog>
+
+<!-- Formulario para proponer un destino -->
+<dialog id="proposeDialog" aria-labelledby="proposeTitle">
+  <form id="proposeForm" class="dlg-body" novalidate>
+    <div class="dlg-head">
+      <h2 id="proposeTitle">Proponer un destino</h2>
+      <button type="button" class="icon-btn" data-cerrar aria-label="Cerrar">✕</button>
+    </div>
+    <p class="notice">Un moderador revisará tu propuesta antes de publicarla.</p>
+
+    <div class="field" style="margin-top:14px">
+      <label for="p-nombre">Nombre del destino</label>
+      <input id="p-nombre" name="nombre" maxlength="120">
+      <span class="err" data-err="nombre"></span>
+    </div>
+    <div class="field">
+      <label for="p-desc">Descripción</label>
+      <textarea id="p-desc" name="descripcion" rows="3" maxlength="2000"></textarea>
+      <span class="err" data-err="descripcion"></span>
+    </div>
+
+    <div class="two">
+      <div class="field">
+        <label for="p-cat">Categoría</label>
+        <select id="p-cat" name="categoria"></select>
+        <span class="err" data-err="categoria"></span>
+      </div>
+      <div class="field">
+        <label for="p-ubic">Ubicación (vereda, sector o referencia)</label>
+        <input id="p-ubic" name="ubicacion" maxlength="160">
+        <span class="err" data-err="ubicacion"></span>
+      </div>
+      <div class="field">
+        <label for="p-dif">Dificultad</label>
+        <select id="p-dif" name="dificultad">
+          <option>Fácil</option><option>Moderada</option><option>Exigente</option>
+        </select>
+        <span class="err" data-err="dificultad"></span>
+      </div>
+      <div class="field">
+        <label for="p-dur">Duración aproximada</label>
+        <input id="p-dur" name="duracion" placeholder="Ej.: 2 horas" maxlength="40">
+        <span class="err" data-err="duracion"></span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label id="lbl-mapa">Ubicación en el mapa (opcional, recomendada)</label>
+      <p class="muted" style="margin:0 0 6px;font-size:.88rem">Toca el mapa para marcar el lugar y arrastra el marcador para ajustarlo.</p>
+      <div id="mapaPropuesta" class="mapa" style="height:300px" role="region" aria-labelledby="lbl-mapa"></div>
+      <div class="mapa-barra">
+        <button type="button" class="btn small ghost" id="btnMiUbicacion">📍 Usar mi ubicación</button>
+        <button type="button" class="btn small ghost" id="btnQuitarUbicacion" hidden>Quitar ubicación</button>
+        <span id="textoUbicacion" class="muted" aria-live="polite">Sin ubicación seleccionada.</span>
+      </div>
+      <input type="hidden" name="latitud">
+      <input type="hidden" name="longitud">
+      <span class="err" data-err="latitud"></span>
+    </div>
+
+    <div class="field">
+      <label for="p-epoca">Mejor época para visitar (opcional)</label>
+      <input id="p-epoca" name="mejor_epoca" maxlength="120">
+      <span class="err" data-err="mejor_epoca"></span>
+    </div>
+    <div class="field">
+      <label for="p-recom">Recomendaciones (opcional, una por línea)</label>
+      <textarea id="p-recom" name="recomendaciones" rows="2" maxlength="600"></textarea>
+      <span class="err" data-err="recomendaciones"></span>
+    </div>
+
+    <div class="field">
+      <label for="p-photos" id="p-photos-label">Fotografías</label>
+      <input id="p-photos" name="fotos" type="file" accept="image/jpeg,image/png,image/webp" multiple>
+      <span class="err" data-err="fotos"></span>
+    </div>
+    <div class="photos" id="photoPreview" aria-live="polite"></div>
+
+    <p class="err" data-err="_general" role="alert"></p>
+    <div class="actions">
+      <button type="button" class="btn ghost" data-cerrar>Cancelar</button>
+      <button type="submit" class="btn gold">Enviar propuesta</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Motivo de rechazo o retiro (lo usa js/admin.js) -->
+<dialog id="rejectDialog" aria-labelledby="rejectTitle">
+  <form id="rejectForm" class="dlg-body" novalidate>
+    <div class="dlg-head">
+      <h2 id="rejectTitle">Rechazar propuesta</h2>
+      <button type="button" class="icon-btn" data-cerrar aria-label="Cerrar">✕</button>
+    </div>
+    <p class="muted" id="rejectHelp"></p>
+    <div class="field">
+      <label for="rej-motivo">Motivo</label>
+      <textarea id="rej-motivo" name="motivo" rows="3" maxlength="255"></textarea>
+      <span class="err" data-err="motivo"></span>
+    </div>
+    <p class="err" data-err="_general" role="alert"></p>
+    <div class="actions">
+      <button type="button" class="btn ghost" data-cerrar>Cancelar</button>
+      <button type="submit" class="btn">Confirmar</button>
+    </div>
+  </form>
+</dialog>
+<!-- Crear o editar una categoría (lo usa js/admin.js) -->
+<dialog id="categoryDialog" aria-labelledby="categoryTitle">
+  <form id="categoryForm" class="dlg-body" novalidate>
+    <div class="dlg-head">
+      <h2 id="categoryTitle">Nueva categoría</h2>
+      <button type="button" class="icon-btn" data-cerrar aria-label="Cerrar">✕</button>
+    </div>
+
+    <div class="field" style="margin-top:14px">
+      <label for="cat-nombre">Nombre</label>
+      <input id="cat-nombre" name="nombre" maxlength="40" autocomplete="off">
+      <span class="err" data-err="nombre"></span>
+    </div>
+
+    <div class="field">
+      <label for="cat-icono">Icono (un emoji)</label>
+      <input id="cat-icono" name="icono" maxlength="8" autocomplete="off" placeholder="Ej.: 🌿">
+      <div class="emoji-picks" aria-label="Emojis sugeridos">
+        <button type="button" data-emoji="🌿">🌿</button><button type="button" data-emoji="🧗">🧗</button>
+        <button type="button" data-emoji="🚵">🚵</button><button type="button" data-emoji="🦋">🦋</button>
+        <button type="button" data-emoji="🏞️">🏞️</button><button type="button" data-emoji="⛺">⛺</button>
+        <button type="button" data-emoji="🍽️">🍽️</button><button type="button" data-emoji="🎨">🎨</button>
+        <button type="button" data-emoji="⛪">⛪</button><button type="button" data-emoji="🐦">🐦</button>
+      </div>
+      <span class="err" data-err="icono"></span>
+    </div>
+
+    <div class="field">
+      <label for="cat-color">Color</label>
+      <input id="cat-color" name="color" type="color" value="#2f6048">
+      <span class="err" data-err="color"></span>
+    </div>
+
+    <p class="muted" style="margin:0">Así se verá: <span id="catPreview" class="cat-chip"></span></p>
+    <p class="err" data-err="_general" role="alert"></p>
+    <div class="actions">
+      <button type="button" class="btn ghost" data-cerrar>Cancelar</button>
+      <button type="submit" class="btn">Guardar</button>
+    </div>
+  </form>
+</dialog>
+<div id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="libs/leaflet/leaflet.js"></script>
+<script src="js/api-cliente.js"></script>
+<script src="js/vistas.js"></script>
+<script src="js/formularios.js"></script>
+<script src="js/mapa.js"></script>
+<script src="js/admin.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

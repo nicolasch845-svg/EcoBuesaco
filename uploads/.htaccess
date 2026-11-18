@@ -1,0 +1,5 @@
+# Las fotos solo se sirven como archivos estáticos
+php_flag engine off
+RemoveHandler .php .phtml .php3 .php4 .php5 .phps
+RemoveType .php .phtml .php3 .php4 .php5 .phps
+Options -Indexes -ExecCGI

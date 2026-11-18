@@ -1,0 +1,22 @@
+# Fotos subidas por los usuarios (se conserva la estructura)
+uploads/destinos/*
+!uploads/destinos/.gitkeep
+
+# Secretos y configuración local
+.env
+app/config.local.php
+
+# Archivos de prueba y temporales
+prueba.php
+prueba.html
+*.log
+*.bak
+
+# Sistema y editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+node_modules/
+app/correos/
+sql/limpieza_pruebas.sql
